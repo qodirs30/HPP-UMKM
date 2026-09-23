@@ -33,8 +33,13 @@ ATURAN KETAT:
     });
   });
 
-  // Models: primary then fallback
-  const models = ["gemini-3.6-flash", "gemini-3.5-flash-lite"];
+  // Models: primary Gemini 3.6 Flash, rollback to Gemini 3.5 Flash-Lite, plus safety net
+  const models = [
+    "gemini-3.6-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash-lite"
+  ];
 
   for (const model of models) {
     try {

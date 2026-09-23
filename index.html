@@ -420,6 +420,27 @@
                 </div>
             </div>
 
+            <!-- AI Settings -->
+            <div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
+                <h3 class="text-lg font-bold text-slate-900 mb-4 border-b border-slate-100 pb-3 flex items-center gap-2">
+                    <i data-lucide="bot" class="w-5 h-5 text-amber-500"></i> Asisten AI (Gemini)
+                </h3>
+                <div class="space-y-4">
+                    <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-xl text-xs text-amber-900 space-y-1">
+                        <p class="font-bold flex items-center gap-1.5"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Model Utama: Gemini 3.6 Flash | Rollback: Gemini 3.5 Flash-Lite</p>
+                        <p class="text-amber-800">Saat deploy di Vercel, pasang API key di <strong>Environment Variables</strong> Vercel dengan nama <code class="bg-amber-100 px-1 py-0.5 rounded font-mono font-semibold">GEMINI_API_KEY</code>.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Gemini API Key (Opsional untuk testing lokal / file://)</label>
+                        <input type="password" id="setting-gemini-key" class="w-full max-w-md px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none font-mono text-sm" placeholder="AIzaSy...">
+                        <p class="text-[11px] text-slate-400 mt-1">Hanya disimpan lokal di browser untuk pengujian tanpa server Vercel.</p>
+                    </div>
+                    <button onclick="saveSettings()" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-xl font-medium transition shadow-sm text-sm">
+                        Simpan API Key
+                    </button>
+                </div>
+            </div>
+
             <div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h3 class="text-lg font-bold text-slate-900 mb-4 border-b border-slate-100 pb-3 flex items-center gap-2">
                     <i data-lucide="database" class="w-5 h-5 text-slate-500"></i> Manajemen Data
@@ -488,7 +509,7 @@
                 </div>
                 <div>
                     <h4 class="text-sm font-bold text-slate-900">Asisten HPP</h4>
-                    <p class="text-[10px] text-slate-500" id="chat-model-label">Gemini Flash</p>
+                    <p class="text-[10px] text-amber-600 font-semibold" id="chat-model-label">Gemini 3.6 Flash</p>
                 </div>
             </div>
             <button onclick="clearChat()" class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Hapus Chat">
@@ -497,11 +518,18 @@
         </div>
 
         <div class="flex-1 overflow-y-auto p-3 space-y-2" id="chat-messages">
-            <div class="chat-msg ai">Halo! 👋 Saya asisten HPP UMKM. Tanya apa aja soal hitung HPP, margin, atau harga jual.</div>
+            <div class="chat-msg ai">Halo! 👋 Saya asisten HPP UMKM. Tanya apa aja soal hitung HPP, margin, atau harga jual. Jawaban saya singkat & to-the-point!</div>
+        </div>
+
+        <!-- Quick Prompts Chips -->
+        <div class="px-3 py-1.5 flex gap-1.5 overflow-x-auto border-t border-slate-100 bg-slate-50/90 text-xs">
+            <button type="button" onclick="sendQuickPrompt('Bagaimana cara menghitung HPP makanan yang benar?')" class="whitespace-nowrap bg-white border border-slate-200 text-slate-600 px-2.5 py-1 rounded-full hover:border-amber-400 hover:text-amber-700 transition text-[11px]">💡 Rumus HPP</button>
+            <button type="button" onclick="sendQuickPrompt('Berapa margin keuntungan ideal untuk bisnis F&B?')" class="whitespace-nowrap bg-white border border-slate-200 text-slate-600 px-2.5 py-1 rounded-full hover:border-amber-400 hover:text-amber-700 transition text-[11px]">🎯 Margin Ideal</button>
+            <button type="button" onclick="sendQuickPrompt('Tolong evaluasi data menu saya sekarang, apakah ada yang boncos?')" class="whitespace-nowrap bg-white border border-slate-200 text-slate-600 px-2.5 py-1 rounded-full hover:border-amber-400 hover:text-amber-700 transition text-[11px]">🔥 Cek Menu Boncos</button>
         </div>
 
         <form onsubmit="event.preventDefault(); sendChat();" class="p-2 border-t border-slate-200 flex gap-2">
-            <input type="text" id="chat-input" placeholder="Ketik pertanyaan..." class="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 bg-slate-50" autocomplete="off">
+            <input type="text" id="chat-input" placeholder="Ketik pertanyaan singkat..." class="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 bg-slate-50" autocomplete="off">
             <button type="submit" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition flex-shrink-0" id="chat-send-btn">
                 <i data-lucide="send" class="w-4 h-4"></i>
             </button>
@@ -1559,11 +1587,15 @@
         function updateSettingsUI() {
             document.getElementById('setting-biz-name').value = appData.settings.businessName || '';
             document.getElementById('setting-def-margin').value = appData.settings.defaultMarginPct || 60;
+            const keyInput = document.getElementById('setting-gemini-key');
+            if (keyInput) keyInput.value = appData.settings.geminiApiKey || '';
         }
 
         function saveSettings() {
-            appData.settings.businessName = document.getElementById('setting-biz-name').value.trim() || 'Bisnis F&B';
+            appData.settings.businessName = document.getElementById('setting-biz-name').value.trim() || 'HPP UMKM F&B';
             appData.settings.defaultMarginPct = parseFloat(document.getElementById('setting-def-margin').value) || 60;
+            const keyInput = document.getElementById('setting-gemini-key');
+            if (keyInput) appData.settings.geminiApiKey = keyInput.value.trim();
             saveData();
             showToast('Pengaturan disimpan', 'success');
         }
@@ -1640,10 +1672,20 @@
             return `Total menu: ${menus.length}, Rata-rata margin: ${avg}%\nContoh menu:\n${top3}`;
         }
 
+        function formatChatText(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            let safe = div.innerHTML;
+            safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            safe = safe.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            safe = safe.replace(/\n/g, '<br>');
+            return safe;
+        }
+
         function appendChatMsg(text, role) {
             const el = document.createElement('div');
             el.className = `chat-msg ${role}`;
-            el.textContent = text;
+            el.innerHTML = formatChatText(text);
             document.getElementById('chat-messages').appendChild(el);
             scrollChatBottom();
         }
@@ -1667,6 +1709,64 @@
             if (el) el.remove();
         }
 
+        function sendQuickPrompt(promptText) {
+            const input = document.getElementById('chat-input');
+            input.value = promptText;
+            sendChat();
+        }
+
+        function getModelDisplayLabel(modelName) {
+            if (!modelName) return 'Gemini 3.6 Flash';
+            if (modelName.includes('3.6')) return 'Gemini 3.6 Flash';
+            if (modelName.includes('3.5') || modelName.includes('lite')) return 'Gemini 3.5 Flash-Lite (Rollback)';
+            if (modelName.includes('2.5')) return 'Gemini 2.5 Flash (Fallback)';
+            return modelName;
+        }
+
+        async function callDirectGemini(messages, context, apiKey) {
+            const systemPrompt = `Kamu adalah asisten AI untuk aplikasi HPP UMKM (Harga Pokok Penjualan F&B).
+Tugasmu membantu pengguna soal:
+- Cara menghitung HPP makanan/minuman
+- Tips margin & harga jual
+- Strategi bisnis F&B sederhana
+- Cara pakai fitur aplikasi
+
+ATURAN KETAT:
+- Jawab SINGKAT, maks 2-3 kalimat. Langsung to the point.
+- Pakai bahasa Indonesia kasual.
+- Kalau ada harga, pakai format Rp (contoh: Rp 25.000).
+- Hemat token.${context ? "\n\nKonteks data menu pengguna:\n" + context : ""}`;
+
+            const contents = messages.map(m => ({
+                role: m.role === 'user' ? 'user' : 'model',
+                parts: [{ text: m.text }]
+            }));
+
+            const models = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'];
+
+            for (const model of models) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                    const resp = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            system_instruction: { parts: [{ text: systemPrompt }] },
+                            contents,
+                            generationConfig: { maxOutputTokens: 150, temperature: 0.7 }
+                        })
+                    });
+                    if (!resp.ok) continue;
+                    const data = await resp.json();
+                    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) return { reply: text, model };
+                } catch (e) {
+                    continue;
+                }
+            }
+            throw new Error('Semua model Gemini tidak merespon.');
+        }
+
         async function sendChat() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
@@ -1682,34 +1782,51 @@
             showTyping();
 
             try {
-                const resp = await fetch(CHAT_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        messages: chatHistory.slice(-8),
-                        context: getChatContext()
-                    })
-                });
+                let replyText = '';
+                let usedModel = '';
+
+                // Try Vercel Serverless API first
+                let serverSuccess = false;
+                try {
+                    const resp = await fetch(CHAT_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            messages: chatHistory.slice(-8),
+                            context: getChatContext()
+                        })
+                    });
+
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        replyText = data.reply;
+                        usedModel = data.model;
+                        serverSuccess = true;
+                    }
+                } catch (err) {
+                    serverSuccess = false;
+                }
+
+                // If Vercel API is not reachable and user saved local API key
+                if (!serverSuccess) {
+                    const localKey = appData.settings.geminiApiKey;
+                    if (localKey) {
+                        const directRes = await callDirectGemini(chatHistory.slice(-8), getChatContext(), localKey);
+                        replyText = directRes.reply;
+                        usedModel = directRes.model;
+                    } else {
+                        throw new Error('Belum deploy ke Vercel atau GEMINI_API_KEY belum disetel. Pasang di Vercel atau menu Pengaturan.');
+                    }
+                }
 
                 hideTyping();
+                appendChatMsg(replyText, 'ai');
+                chatHistory.push({ role: 'model', text: replyText });
 
-                if (!resp.ok) {
-                    const err = await resp.json().catch(() => ({}));
-                    appendChatMsg(err.error || 'Gagal menghubungi AI. Coba lagi.', 'ai');
-                    return;
-                }
-
-                const data = await resp.json();
-                appendChatMsg(data.reply, 'ai');
-                chatHistory.push({ role: 'model', text: data.reply });
-
-                if (data.model) {
-                    const label = data.model.includes('lite') ? 'Gemini Flash-Lite' : 'Gemini Flash';
-                    document.getElementById('chat-model-label').textContent = label;
-                }
+                document.getElementById('chat-model-label').textContent = getModelDisplayLabel(usedModel);
             } catch (e) {
                 hideTyping();
-                appendChatMsg('Koneksi gagal. Pastikan sudah deploy ke Vercel.', 'ai');
+                appendChatMsg(e.message || 'Gagal menghubungi AI. Coba beberapa saat lagi.', 'ai');
             } finally {
                 btn.disabled = false;
                 input.disabled = false;
@@ -1721,7 +1838,7 @@
             chatHistory = [];
             const msgs = document.getElementById('chat-messages');
             msgs.innerHTML = '<div class="chat-msg ai">Chat direset. Tanya apa aja soal HPP, margin, atau harga jual ya! 👋</div>';
-            document.getElementById('chat-model-label').textContent = 'Gemini Flash';
+            document.getElementById('chat-model-label').textContent = 'Gemini 3.6 Flash';
         }
     </script>
 </body>
