@@ -265,10 +265,8 @@
             </header>
 
             <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div class="flex space-x-1 w-full sm:w-auto overflow-x-auto p-1 bg-slate-100 rounded-lg">
-                    <button class="ing-filter-btn flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-md bg-white shadow-sm text-slate-900" data-filter="all">Semua</button>
-                    <button class="ing-filter-btn flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-md text-slate-500 hover:text-slate-900" data-filter="raw_material">Bahan Baku</button>
-                    <button class="ing-filter-btn flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-md text-slate-500 hover:text-slate-900" data-filter="packaging">Kemasan</button>
+                <div class="flex space-x-1.5 w-full sm:w-auto overflow-x-auto p-1 bg-slate-100 rounded-xl" id="ing-filter-tabs">
+                    <!-- Populated dynamically via renderIngredientFilterTabs() -->
                 </div>
                 <div class="relative w-full sm:w-64">
                     <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400"></i>
@@ -675,6 +673,59 @@
         </div>
     </div>
 
+    <!-- Ingredient Type Modal (Custom Tipe Bahan) -->
+    <div id="modal-ingredient-type" class="modal fixed inset-0 z-50 items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-900" id="type-modal-title">Tambah Tipe Bahan</h3>
+                <button onclick="closeModal('modal-ingredient-type')" class="text-slate-400 hover:text-slate-600 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="form-ingredient-type" onsubmit="event.preventDefault(); saveIngredientType();" class="p-4 md:p-6 overflow-y-auto">
+                <input type="hidden" id="type-id">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Nama Tipe Bahan *</label>
+                    <input type="text" id="type-name" required placeholder="Contoh: Bumbu, Topping, Garnish, Pelengkap..." class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Klasifikasi di Resep *</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <label class="flex items-center gap-2.5 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/60">
+                            <input type="radio" name="type-nature" value="raw_material" checked class="text-amber-600 focus:ring-amber-500">
+                            <div class="text-xs">
+                                <span class="font-bold text-slate-800 block">Bahan Resep</span>
+                                <span class="text-slate-500">Makanan / Minuman</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2.5 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/60">
+                            <input type="radio" name="type-nature" value="packaging" class="text-blue-600 focus:ring-blue-500">
+                            <div class="text-xs">
+                                <span class="font-bold text-slate-800 block">Kemasan Resep</span>
+                                <span class="text-slate-500">Dus / Cup / Plastik</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Warna Lencana</label>
+                    <div class="flex gap-2 flex-wrap" id="type-color-picker">
+                        <!-- Colors populated via JS -->
+                    </div>
+                    <input type="hidden" id="type-color" value="#F59E0B">
+                </div>
+
+                <div class="flex gap-3 justify-end">
+                    <button type="button" onclick="closeModal('modal-ingredient-type')" class="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-xl transition">Batal</button>
+                    <button type="submit" class="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl shadow-sm transition">Simpan Tipe</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Ingredient Modal -->
     <div id="modal-ingredient" class="modal fixed inset-0 z-50 items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4 py-6">
         <div class="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden flex flex-col max-h-full">
@@ -694,15 +745,24 @@
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Tipe *</label>
-                        <select id="ing-type" required class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none bg-white">
-                            <option value="raw_material">Bahan Baku</option>
-                            <option value="packaging">Kemasan (Dus/Cup)</option>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-sm font-medium text-slate-700">Tipe *</label>
+                            <button type="button" onclick="openTypeModal()" class="text-xs text-primary-600 hover:text-primary-700 font-bold hover:underline flex items-center gap-1">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tipe Baru
+                            </button>
+                        </div>
+                        <select id="ing-type" required onchange="handleTypeSelectChange(this)" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none bg-white">
+                            <!-- Populated dynamically via JS -->
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Kategori (Opsional)</label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-sm font-medium text-slate-700">Kategori (Opsional)</label>
+                            <button type="button" onclick="openCategoryModal()" class="text-xs text-primary-600 hover:text-primary-700 font-bold hover:underline flex items-center gap-1">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Buat Kategori
+                            </button>
+                        </div>
                         <select id="ing-category" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none bg-white">
                             <option value="">Tidak ada...</option>
                             <!-- Populated by JS -->
@@ -779,14 +839,28 @@
         let appData = {
             categories: [],
             ingredients: [],
+            ingredientTypes: [],
             recipes: [],
             settings: { businessName: "HPP UMKM F&B", defaultMarginPct: 60 }
         };
         
         let currentTab = 'dashboard';
+        let currentIngFilter = 'all';
         let recipeBuilderActive = false;
         
-        // Colors for category picker
+        // Default built-in ingredient types
+        const DEFAULT_INGREDIENT_TYPES = [
+            { id: 'raw_material', name: 'Bahan Baku', color: '#F59E0B', nature: 'raw_material', isDefault: true },
+            { id: 'packaging', name: 'Kemasan', color: '#3B82F6', nature: 'packaging', isDefault: true }
+        ];
+
+        function ensureDefaultIngredientTypes() {
+            if (!appData.ingredientTypes || !Array.isArray(appData.ingredientTypes) || appData.ingredientTypes.length === 0) {
+                appData.ingredientTypes = JSON.parse(JSON.stringify(DEFAULT_INGREDIENT_TYPES));
+            }
+        }
+        
+        // Colors for category & type picker
         const CATEGORY_COLORS = ['#EF4444', '#F97316', '#F59E0B', '#84CC16', '#10B981', '#06B6D4', '#3B82F6', '#8B5CF6', '#D946EF', '#F43F5E'];
         
         // --- INITIALIZATION ---
@@ -809,6 +883,7 @@
                     console.error("Error loading data", e);
                 }
             }
+            ensureDefaultIngredientTypes();
             updateSettingsUI();
             refreshAllViews();
         }
@@ -823,26 +898,13 @@
         }
 
         function initListeners() {
-            // Ingredient Search & Filters
-            document.getElementById('ingredient-search').addEventListener('input', renderIngredients);
-            document.querySelectorAll('.ing-filter-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.ing-filter-btn').forEach(b => {
-                        b.classList.remove('bg-white', 'shadow-sm', 'text-slate-900');
-                        b.classList.add('text-slate-500');
-                    });
-                    e.target.classList.remove('text-slate-500');
-                    e.target.classList.add('bg-white', 'shadow-sm', 'text-slate-900');
-                    e.target.dataset.active = "true";
-                    document.querySelectorAll('.ing-filter-btn').forEach(b => {
-                        if(b !== e.target) delete b.dataset.active;
-                    });
-                    renderIngredients();
-                });
-            });
+            // Ingredient Search
+            const ingSearch = document.getElementById('ingredient-search');
+            if (ingSearch) ingSearch.addEventListener('input', renderIngredients);
 
             // Recipe Search
-            document.getElementById('recipe-search').addEventListener('input', renderRecipes);
+            const recSearch = document.getElementById('recipe-search');
+            if (recSearch) recSearch.addEventListener('input', renderRecipes);
         }
 
         // --- UTILS ---
@@ -922,7 +984,12 @@
         function refreshAllViews() {
             if (currentTab === 'dashboard') renderDashboard();
             if (currentTab === 'kategori') renderCategories();
-            if (currentTab === 'bahan') { renderIngredients(); populateCategorySelects(); }
+            if (currentTab === 'bahan') { 
+                renderIngredientFilterTabs(); 
+                renderIngredients(); 
+                populateCategorySelects(); 
+                populateIngredientTypeSelects(); 
+            }
             if (currentTab === 'resep') { 
                 if (!recipeBuilderActive) renderRecipes(); 
             }
@@ -1088,6 +1155,201 @@
             });
         }
 
+        // --- INGREDIENT TYPES (CUSTOM TIPE BAHAN) ---
+        function getIngredientNature(typeId) {
+            if (typeId === 'packaging') return 'packaging';
+            if (typeId === 'raw_material') return 'raw_material';
+            const t = appData.ingredientTypes?.find(x => x.id === typeId);
+            return (t && t.nature) ? t.nature : 'raw_material';
+        }
+
+        function populateIngredientTypeSelects() {
+            ensureDefaultIngredientTypes();
+            const sel = document.getElementById('ing-type');
+            if (!sel) return;
+            const currentVal = sel.value;
+            
+            let html = '';
+            appData.ingredientTypes.forEach(t => {
+                const isSelected = (currentVal === t.id) ? 'selected' : '';
+                html += `<option value="${t.id}" ${isSelected}>${t.name}</option>`;
+            });
+            html += '<option value="__NEW__" class="text-primary-600 font-bold">➕ Tambah Tipe Baru...</option>';
+            sel.innerHTML = html;
+        }
+
+        function handleTypeSelectChange(selectElem) {
+            if (selectElem.value === '__NEW__') {
+                openTypeModal();
+                selectElem.value = 'raw_material';
+            } else {
+                const typeObj = appData.ingredientTypes?.find(t => t.id === selectElem.value);
+                if (typeObj && typeObj.nature === 'packaging') {
+                    const unitElem = document.getElementById('ing-unit');
+                    if (unitElem && !document.getElementById('ing-id').value) unitElem.value = 'pcs';
+                }
+            }
+        }
+
+        function openTypeModal(id = null) {
+            ensureDefaultIngredientTypes();
+            const form = document.getElementById('form-ingredient-type');
+            form.reset();
+            document.getElementById('type-id').value = '';
+            
+            let title = "Tambah Tipe Bahan";
+            let defaultColor = CATEGORY_COLORS[1];
+            let defaultNature = 'raw_material';
+            
+            if (id) {
+                const t = appData.ingredientTypes.find(x => x.id === id);
+                if (t) {
+                    title = "Edit Tipe Bahan";
+                    document.getElementById('type-id').value = t.id;
+                    document.getElementById('type-name').value = t.name;
+                    defaultColor = t.color || '#F59E0B';
+                    defaultNature = t.nature || (t.id === 'packaging' ? 'packaging' : 'raw_material');
+                }
+            }
+            
+            document.getElementById('type-modal-title').innerText = title;
+            document.getElementById('type-color').value = defaultColor;
+            
+            const radios = document.getElementsByName('type-nature');
+            for (let r of radios) {
+                r.checked = (r.value === defaultNature);
+            }
+            
+            const picker = document.getElementById('type-color-picker');
+            picker.innerHTML = '';
+            CATEGORY_COLORS.forEach(color => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `w-7 h-7 rounded-full border-2 ${color === defaultColor ? 'border-slate-900' : 'border-transparent'} transition transform hover:scale-110`;
+                btn.style.backgroundColor = color;
+                btn.onclick = () => {
+                    document.getElementById('type-color').value = color;
+                    Array.from(picker.children).forEach(c => c.classList.replace('border-slate-900', 'border-transparent'));
+                    btn.classList.replace('border-transparent', 'border-slate-900');
+                };
+                picker.appendChild(btn);
+            });
+            
+            openModal('modal-ingredient-type');
+            setTimeout(() => document.getElementById('type-name').focus(), 100);
+        }
+
+        function saveIngredientType() {
+            const id = document.getElementById('type-id').value;
+            const name = document.getElementById('type-name').value.trim();
+            const color = document.getElementById('type-color').value;
+            let nature = 'raw_material';
+            const radios = document.getElementsByName('type-nature');
+            for (let r of radios) {
+                if (r.checked) nature = r.value;
+            }
+            
+            if (!name) {
+                showToast('Mohon masukkan nama tipe bahan', 'error');
+                return;
+            }
+            
+            let targetTypeId = id;
+            if (id) {
+                const idx = appData.ingredientTypes.findIndex(t => t.id === id);
+                if (idx > -1) {
+                    appData.ingredientTypes[idx].name = name;
+                    appData.ingredientTypes[idx].color = color;
+                    appData.ingredientTypes[idx].nature = nature;
+                    showToast('Tipe bahan diperbarui', 'success');
+                }
+            } else {
+                targetTypeId = 'type_' + generateId();
+                appData.ingredientTypes.push({
+                    id: targetTypeId,
+                    name,
+                    color,
+                    nature,
+                    createdAt: Date.now()
+                });
+                showToast(`Tipe "${name}" berhasil ditambahkan!`, 'success');
+            }
+            
+            saveData();
+            populateIngredientTypeSelects();
+            
+            const sel = document.getElementById('ing-type');
+            if (sel) sel.value = targetTypeId;
+            
+            renderIngredientFilterTabs();
+            renderIngredients();
+            refreshRecipeItemDropdowns();
+            
+            closeModal('modal-ingredient-type');
+        }
+
+        function deleteIngredientType(typeId) {
+            if (typeId === 'raw_material' || typeId === 'packaging') {
+                showToast('Tipe standar tidak dapat dihapus', 'error');
+                return;
+            }
+            const inUse = appData.ingredients.some(i => i.type === typeId);
+            if (inUse) {
+                showToast('Tipe ini sedang digunakan oleh bahan yang tersimpan.', 'error');
+                return;
+            }
+            openConfirm('Hapus Tipe Bahan', 'Yakin ingin menghapus tipe bahan ini?', () => {
+                appData.ingredientTypes = appData.ingredientTypes.filter(t => t.id !== typeId);
+                if (currentIngFilter === typeId) currentIngFilter = 'all';
+                saveData();
+                populateIngredientTypeSelects();
+                renderIngredientFilterTabs();
+                renderIngredients();
+                refreshRecipeItemDropdowns();
+                showToast('Tipe bahan dihapus', 'success');
+            });
+        }
+
+        function renderIngredientFilterTabs() {
+            ensureDefaultIngredientTypes();
+            const container = document.getElementById('ing-filter-tabs');
+            if (!container) return;
+            
+            let html = `
+                <button onclick="setIngredientFilter('all')" class="ing-filter-btn flex-shrink-0 px-3.5 py-1.5 text-xs md:text-sm rounded-lg transition ${currentIngFilter === 'all' ? 'bg-white shadow-sm font-bold text-slate-900' : 'text-slate-600 hover:text-slate-900 font-medium'}">Semua</button>
+            `;
+            
+            appData.ingredientTypes.forEach(t => {
+                const isActive = currentIngFilter === t.id;
+                const activeClass = isActive ? 'bg-white shadow-sm font-bold text-slate-900' : 'text-slate-600 hover:text-slate-900 font-medium';
+                const deleteBtn = (!t.isDefault && t.id !== 'raw_material' && t.id !== 'packaging')
+                    ? `<span onclick="event.stopPropagation(); deleteIngredientType('${t.id}')" title="Hapus tipe ${t.name}" class="ml-1 text-slate-400 hover:text-red-500 cursor-pointer font-bold text-sm">×</span>`
+                    : '';
+                html += `
+                    <button onclick="setIngredientFilter('${t.id}')" class="ing-filter-btn flex-shrink-0 px-3.5 py-1.5 text-xs md:text-sm rounded-lg transition flex items-center gap-1.5 ${activeClass}">
+                        <span class="w-2 h-2 rounded-full inline-block flex-shrink-0" style="background-color: ${t.color || '#F59E0B'}"></span>
+                        <span>${t.name}</span>
+                        ${deleteBtn}
+                    </button>
+                `;
+            });
+            
+            html += `
+                <button onclick="openTypeModal()" class="flex-shrink-0 px-2.5 py-1.5 text-xs font-semibold rounded-lg text-primary-600 hover:bg-amber-100/60 transition flex items-center gap-1">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tipe Baru
+                </button>
+            `;
+            
+            container.innerHTML = html;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function setIngredientFilter(filter) {
+            currentIngFilter = filter;
+            renderIngredientFilterTabs();
+            renderIngredients();
+        }
+
         // --- INGREDIENTS ---
         function calcBaseUnitCost(price, qty, unit) {
             let divider = qty;
@@ -1108,10 +1370,11 @@
         }
 
         function renderIngredients() {
+            ensureDefaultIngredientTypes();
             const container = document.getElementById('ingredient-list');
             const emptyState = document.getElementById('ingredient-empty');
             const search = document.getElementById('ingredient-search').value.toLowerCase();
-            const activeFilter = document.querySelector('.ing-filter-btn[data-active="true"]')?.dataset.filter || 'all';
+            const activeFilter = currentIngFilter || 'all';
             
             let filtered = appData.ingredients.filter(i => {
                 const matchSearch = i.name.toLowerCase().includes(search);
@@ -1130,14 +1393,19 @@
             emptyState.classList.add('hidden');
 
             filtered.forEach(ing => {
-                const badgeClass = ing.type === 'raw_material' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800';
-                const typeName = ing.type === 'raw_material' ? 'Bahan Baku' : 'Kemasan';
+                const typeObj = appData.ingredientTypes.find(t => t.id === ing.type) || {
+                    name: ing.type === 'packaging' ? 'Kemasan' : 'Bahan Baku',
+                    color: ing.type === 'packaging' ? '#3B82F6' : '#F59E0B'
+                };
                 const card = document.createElement('div');
                 card.className = 'bg-white p-5 rounded-xl shadow-sm border border-slate-200 relative group';
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <div>
-                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-1 ${badgeClass}">${typeName}</span>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide mb-1" style="background-color: ${typeObj.color}18; color: ${typeObj.color}; border: 1px solid ${typeObj.color}40;">
+                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${typeObj.color};"></span>
+                                ${typeObj.name}
+                            </span>
                             <h4 class="font-bold text-slate-900">${ing.name}</h4>
                         </div>
                         <div class="flex opacity-0 group-hover:opacity-100 transition-opacity bg-white shadow-sm rounded-lg border border-slate-100">
@@ -1163,24 +1431,27 @@
         }
 
         function openIngredientModal(id = null, defaultType = 'raw_material') {
+            ensureDefaultIngredientTypes();
             populateCategorySelects();
+            populateIngredientTypeSelects();
             const form = document.getElementById('form-ingredient');
             form.reset();
             document.getElementById('ing-id').value = '';
             document.getElementById('ing-calc-result').innerText = 'Rp 0';
             
-            let title = defaultType === 'packaging' ? "Tambah Kemasan / Dus" : "Tambah Bahan Baku";
+            const typeObj = appData.ingredientTypes.find(t => t.id === defaultType) || { name: 'Bahan Baku' };
+            let title = defaultType === 'packaging' ? "Tambah Kemasan / Dus" : `Tambah ${typeObj.name}`;
             document.getElementById('ing-type').value = defaultType;
-            document.getElementById('ing-unit').value = defaultType === 'packaging' ? 'pcs' : 'kg';
+            document.getElementById('ing-unit').value = (defaultType === 'packaging' || (typeObj && typeObj.nature === 'packaging')) ? 'pcs' : 'kg';
             document.getElementById('ing-qty').value = '1';
             
             if (id) {
                 const ing = appData.ingredients.find(i => i.id === id);
                 if (ing) {
-                    title = "Edit Bahan & Dus";
+                    title = "Edit Bahan & Kemasan";
                     document.getElementById('ing-id').value = ing.id;
                     document.getElementById('ing-name').value = ing.name;
-                    document.getElementById('ing-type').value = ing.type;
+                    document.getElementById('ing-type').value = ing.type || 'raw_material';
                     document.getElementById('ing-category').value = ing.categoryId || '';
                     document.getElementById('ing-price').value = formatNumber(ing.purchasePrice);
                     document.getElementById('ing-qty').value = ing.purchaseQty;
@@ -1199,6 +1470,7 @@
 
         function refreshRecipeItemDropdowns() {
             populateCategorySelects();
+            populateIngredientTypeSelects();
             document.querySelectorAll('#recipe-raw-items .recipe-item-row').forEach(row => {
                 const sel = row.querySelector('.item-select');
                 if (!sel) return;
@@ -1240,6 +1512,8 @@
                 name, type, categoryId, purchasePrice, purchaseQty, purchaseUnit, baseUnit, costPerBaseUnit, updatedAt: Date.now()
             };
 
+            const typeObj = appData.ingredientTypes.find(t => t.id === type) || { name: 'Bahan' };
+
             if (id) {
                 const idx = appData.ingredients.findIndex(i => i.id === id);
                 if (idx > -1) {
@@ -1250,7 +1524,7 @@
             } else {
                 data.id = generateId();
                 appData.ingredients.push(data);
-                showToast(`${type === 'packaging' ? 'Kemasan' : 'Bahan'} berhasil ditambahkan!`, 'success');
+                showToast(`${typeObj.name} berhasil ditambahkan!`, 'success');
             }
             
             // Recalculate all recipes since an ingredient price might have changed
@@ -1428,30 +1702,79 @@
         }
 
         function getAvailableIngredientsSelect(type, selectedVal = '', isSub = false) {
+            ensureDefaultIngredientTypes();
             let options = '<option value="">Pilih...</option>';
-            const subs = type === 'raw_material' ? appData.recipes.filter(r => r.isSubRecipe) : [];
-            const ings = appData.ingredients.filter(i => i.type === type);
             
-            if (type === 'raw_material' && subs.length > 0) {
-                options += '<optgroup label="Sub-Resep">';
-                subs.forEach(s => {
-                    const sel = (isSub && selectedVal === s.id) ? 'selected' : '';
-                    options += `<option value="SUB_${s.id}" ${sel}>[Sub] ${s.name} (${formatRp(s.totalHppPerPortion)}/porsi)</option>`;
-                });
-                options += '</optgroup>';
-            }
+            if (type === 'raw_material') {
+                const subs = appData.recipes.filter(r => r.isSubRecipe);
+                if (subs.length > 0) {
+                    options += '<optgroup label="Sub-Resep / Premix">';
+                    subs.forEach(s => {
+                        const sel = (isSub && selectedVal === s.id) ? 'selected' : '';
+                        options += `<option value="SUB_${s.id}" ${sel}>[Sub] ${s.name} (${formatRp(s.totalHppPerPortion)}/porsi)</option>`;
+                    });
+                    options += '</optgroup>';
+                }
 
-            if (ings.length > 0) {
-                options += `<optgroup label="${type === 'raw_material' ? 'Bahan Baku' : 'Kemasan'}">`;
-                ings.forEach(i => {
-                    const sel = (!isSub && selectedVal === i.id) ? 'selected' : '';
-                    options += `<option value="ING_${i.id}" data-baseunit="${i.baseUnit}" data-cost="${i.costPerBaseUnit}" ${sel}>${i.name} (${formatRp(i.costPerBaseUnit)}/${i.baseUnit})</option>`;
+                const nonPkgTypes = appData.ingredientTypes.filter(t => t.nature !== 'packaging');
+                let countNonPkg = subs.length;
+
+                nonPkgTypes.forEach(t => {
+                    const ings = appData.ingredients.filter(i => i.type === t.id);
+                    if (ings.length > 0) {
+                        countNonPkg += ings.length;
+                        options += `<optgroup label="${t.name}">`;
+                        ings.forEach(i => {
+                            const sel = (!isSub && selectedVal === i.id) ? 'selected' : '';
+                            options += `<option value="ING_${i.id}" data-baseunit="${i.baseUnit}" data-cost="${i.costPerBaseUnit}" ${sel}>${i.name} (${formatRp(i.costPerBaseUnit)}/${i.baseUnit})</option>`;
+                        });
+                        options += '</optgroup>';
+                    }
                 });
-                options += '</optgroup>';
-            } else if (subs.length === 0) {
-                if (type === 'raw_material') {
+
+                const otherIngs = appData.ingredients.filter(i => getIngredientNature(i.type) !== 'packaging' && !nonPkgTypes.some(t => t.id === i.type));
+                if (otherIngs.length > 0) {
+                    countNonPkg += otherIngs.length;
+                    options += '<optgroup label="Bahan Lainnya">';
+                    otherIngs.forEach(i => {
+                        const sel = (!isSub && selectedVal === i.id) ? 'selected' : '';
+                        options += `<option value="ING_${i.id}" data-baseunit="${i.baseUnit}" data-cost="${i.costPerBaseUnit}" ${sel}>${i.name} (${formatRp(i.costPerBaseUnit)}/${i.baseUnit})</option>`;
+                    });
+                    options += '</optgroup>';
+                }
+
+                if (countNonPkg === 0) {
                     options += '<option value="" disabled>⚠️ Belum ada bahan baku. Klik "+ Buat Master Bahan"</option>';
-                } else {
+                }
+            } else {
+                const pkgTypes = appData.ingredientTypes.filter(t => t.nature === 'packaging');
+                let countPkg = 0;
+
+                pkgTypes.forEach(t => {
+                    const ings = appData.ingredients.filter(i => i.type === t.id);
+                    if (ings.length > 0) {
+                        countPkg += ings.length;
+                        options += `<optgroup label="${t.name}">`;
+                        ings.forEach(i => {
+                            const sel = (!isSub && selectedVal === i.id) ? 'selected' : '';
+                            options += `<option value="ING_${i.id}" data-baseunit="${i.baseUnit}" data-cost="${i.costPerBaseUnit}" ${sel}>${i.name} (${formatRp(i.costPerBaseUnit)}/${i.baseUnit})</option>`;
+                        });
+                        options += '</optgroup>';
+                    }
+                });
+
+                const otherPkg = appData.ingredients.filter(i => getIngredientNature(i.type) === 'packaging' && !pkgTypes.some(t => t.id === i.type));
+                if (otherPkg.length > 0) {
+                    countPkg += otherPkg.length;
+                    options += '<optgroup label="Kemasan Lainnya">';
+                    otherPkg.forEach(i => {
+                        const sel = (!isSub && selectedVal === i.id) ? 'selected' : '';
+                        options += `<option value="ING_${i.id}" data-baseunit="${i.baseUnit}" data-cost="${i.costPerBaseUnit}" ${sel}>${i.name} (${formatRp(i.costPerBaseUnit)}/${i.baseUnit})</option>`;
+                    });
+                    options += '</optgroup>';
+                }
+
+                if (countPkg === 0) {
                     options += '<option value="" disabled>⚠️ Belum ada kemasan. Klik "+ Buat Master Kemasan"</option>';
                 }
             }
@@ -1744,6 +2067,11 @@
         function loadSampleData() {
             appData = {
                 settings: { businessName: "Dapur Tiwul & Kopi UMKM", defaultMarginPct: 60, geminiApiKey: appData.settings?.geminiApiKey || '' },
+                ingredientTypes: [
+                    { id: 'raw_material', name: 'Bahan Baku', color: '#F59E0B', nature: 'raw_material', isDefault: true },
+                    { id: 'packaging', name: 'Kemasan', color: '#3B82F6', nature: 'packaging', isDefault: true },
+                    { id: 'type_topping', name: 'Topping & Taburan', color: '#10B981', nature: 'raw_material', isDefault: false }
+                ],
                 categories: [
                     { id: 'cat_snack', name: 'Kudapan Tradisional', color: '#F59E0B', createdAt: Date.now() },
                     { id: 'cat_drink', name: 'Minuman Kopi', color: '#10B981', createdAt: Date.now() },
@@ -1752,7 +2080,7 @@
                 ingredients: [
                     { id: 'ing_tiwul', name: 'Tepung Tiwul Kering', type: 'raw_material', categoryId: 'cat_snack', purchasePrice: 18000, purchaseQty: 1, purchaseUnit: 'kg', baseUnit: 'g', costPerBaseUnit: 18, updatedAt: Date.now() },
                     { id: 'ing_gula', name: 'Gula Merah / Aren', type: 'raw_material', categoryId: 'cat_snack', purchasePrice: 28000, purchaseQty: 1, purchaseUnit: 'kg', baseUnit: 'g', costPerBaseUnit: 28, updatedAt: Date.now() },
-                    { id: 'ing_kelapa', name: 'Kelapa Parut Segar', type: 'raw_material', categoryId: 'cat_snack', purchasePrice: 10000, purchaseQty: 500, purchaseUnit: 'g', baseUnit: 'g', costPerBaseUnit: 20, updatedAt: Date.now() },
+                    { id: 'ing_kelapa', name: 'Kelapa Parut Segar', type: 'type_topping', categoryId: 'cat_snack', purchasePrice: 10000, purchaseQty: 500, purchaseUnit: 'g', baseUnit: 'g', costPerBaseUnit: 20, updatedAt: Date.now() },
                     { id: 'ing_kopi', name: 'Biji Kopi Robusta', type: 'raw_material', categoryId: 'cat_drink', purchasePrice: 85000, purchaseQty: 1, purchaseUnit: 'kg', baseUnit: 'g', costPerBaseUnit: 85, updatedAt: Date.now() },
                     { id: 'ing_susu', name: 'Susu UHT Full Cream', type: 'raw_material', categoryId: 'cat_drink', purchasePrice: 19000, purchaseQty: 1, purchaseUnit: 'l', baseUnit: 'ml', costPerBaseUnit: 19, updatedAt: Date.now() },
                     { id: 'pkg_mika', name: 'Dus Mika Bento Tiwul', type: 'packaging', categoryId: 'cat_pkg', purchasePrice: 35000, purchaseQty: 50, purchaseUnit: 'pcs', baseUnit: 'pcs', costPerBaseUnit: 700, updatedAt: Date.now() },
