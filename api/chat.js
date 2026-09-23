@@ -34,7 +34,7 @@ ATURAN KETAT:
   });
 
   // Models: primary then fallback
-  const models = ["gemini-2.5-flash", "gemini-2.0-flash-lite"];
+  const models = ["gemini-3.6-flash", "gemini-3.5-flash-lite"];
 
   for (const model of models) {
     try {
