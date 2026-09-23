@@ -2,8 +2,31 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HPP UMKM - Kalkulator HPP & Recipe Costing</title>
+    
+    <!-- Favicon & Touch Icons -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    
+    <!-- PWA & Mobile Web App Meta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#D97706">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="HPP UMKM">
+    <meta name="application-name" content="HPP UMKM">
+    <meta name="description" content="Universal HPP & Recipe Costing SaaS untuk Bisnis Kuliner & F&B UMKM">
+    
+    <!-- Open Graph & Social Sharing -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="HPP UMKM - Kalkulator HPP & Recipe Costing">
+    <meta property="og:description" content="Universal HPP & Recipe Costing SaaS untuk Bisnis Kuliner & F&B UMKM">
+    <meta property="og:image" content="logo.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -102,12 +125,14 @@
 
     <!-- Desktop Sidebar -->
     <aside class="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-full flex-shrink-0 relative z-20">
-        <div class="p-6 border-b border-slate-200">
-            <h1 class="text-2xl font-bold text-primary-600 flex items-center gap-2">
-                <i data-lucide="calculator" class="w-6 h-6"></i>
-                HPP UMKM
-            </h1>
-            <p class="text-xs text-slate-500 mt-1">Universal HPP & Costing</p>
+        <div class="p-5 border-b border-slate-200 flex items-center gap-3">
+            <img src="logo.png" alt="HPP UMKM Logo" class="w-11 h-11 rounded-2xl shadow-sm border border-amber-200/80 object-cover flex-shrink-0">
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
+                    HPP <span class="text-primary-600">UMKM</span>
+                </h1>
+                <p class="text-[11px] text-slate-500 font-medium mt-1">Universal HPP & Costing</p>
+            </div>
         </div>
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto" id="desktop-nav">
             <button onclick="switchTab('dashboard')" class="nav-item flex items-center w-full px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50" data-tab="dashboard">
@@ -133,6 +158,22 @@
     <!-- Main Content Area -->
     <main class="flex-1 h-full overflow-y-auto bg-slate-50 pb-20 md:pb-0 relative z-10" id="main-content">
         
+        <!-- Mobile Top Header Bar -->
+        <header class="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-3 flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <img src="logo.png" alt="HPP UMKM Logo" class="w-8 h-8 rounded-xl shadow-xs border border-amber-200 object-cover flex-shrink-0">
+                <div>
+                    <h1 class="text-base font-extrabold text-slate-900 leading-none">HPP <span class="text-primary-600">UMKM</span></h1>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Universal HPP & Costing</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="pwa-install-btn-mobile" onclick="triggerPwaInstall()" class="hidden bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shadow-xs transition">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Pasang
+                </button>
+            </div>
+        </header>
+
         <!-- DASHBOARD TAB -->
         <section id="tab-dashboard" class="tab-content p-4 md:p-8 max-w-5xl mx-auto">
             <header class="mb-6 md:mb-8">
@@ -438,6 +479,33 @@
                 <p class="text-slate-500">Konfigurasi preferensi aplikasi dan manajemen data.</p>
             </header>
 
+            <!-- App Info & PWA Card -->
+            <div class="bg-gradient-to-br from-amber-50/70 via-white to-slate-50 p-5 md:p-6 rounded-2xl shadow-sm border border-amber-200/80 mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <img src="logo.png" alt="HPP UMKM Logo" class="w-16 h-16 rounded-2xl shadow-md border border-amber-200 object-cover flex-shrink-0">
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="text-lg font-extrabold text-slate-900">HPP UMKM</h3>
+                                <span class="bg-amber-100 text-amber-800 text-[11px] font-bold px-2 py-0.5 rounded-full border border-amber-300/60">PWA v1.2</span>
+                                <span id="pwa-badge-status" class="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2 py-0.5 rounded-full border border-emerald-300/60 flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Siap Offline
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-600 mt-1">Universal HPP & Recipe Costing SaaS untuk pengusaha F&B dan UMKM kuliner.</p>
+                        </div>
+                    </div>
+                    <div class="flex sm:flex-col items-center sm:items-end gap-2 flex-shrink-0">
+                        <button id="pwa-install-btn-settings" onclick="triggerPwaInstall()" class="hidden bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-sm flex items-center gap-2">
+                            <i data-lucide="download" class="w-4 h-4"></i> Pasang Aplikasi
+                        </button>
+                        <p id="pwa-installed-note" class="hidden text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Aplikasi Terpasang
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
                 <h3 class="text-lg font-bold text-slate-900 mb-4 border-b border-slate-100 pb-3">Profil Bisnis</h3>
                 <div class="space-y-4">
@@ -538,12 +606,13 @@
     <!-- AI Chat Panel -->
     <div class="chat-panel" id="chat-panel">
         <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-amber-50 to-white">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center">
-                    <i data-lucide="bot" class="w-4 h-4 text-white"></i>
-                </div>
+            <div class="flex items-center gap-2.5">
+                <img src="logo.png" alt="qodirs Asisten" class="w-8 h-8 rounded-full border border-amber-300 shadow-xs object-cover flex-shrink-0">
                 <div>
-                    <h4 class="text-sm font-bold text-slate-900">qodirs Asisten</h4>
+                    <h4 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                        qodirs Asisten
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Online"></span>
+                    </h4>
                     <p class="text-[10px] text-amber-600 font-semibold" id="chat-model-label">Gemini 3.6 Flash</p>
                 </div>
             </div>
@@ -1997,6 +2066,76 @@ GAYA DAN TONE JAWABAN:
             const msgs = document.getElementById('chat-messages');
             msgs.innerHTML = '<div class="chat-msg ai">Chat direset. Saya <strong>qodirs Asisten</strong> siap bantu kamu lagi! 👋</div>';
             document.getElementById('chat-model-label').textContent = 'Gemini 3.6 Flash';
+        }
+
+        // ==========================================
+        // PWA & SERVICE WORKER INSTALLATION LOGIC
+        // ==========================================
+        let deferredPrompt = null;
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => {
+                        console.log('HPP UMKM ServiceWorker ready with scope:', reg.scope);
+                    })
+                    .catch(err => {
+                        console.warn('HPP UMKM ServiceWorker registration failed:', err);
+                    });
+            });
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            const btnMobile = document.getElementById('pwa-install-btn-mobile');
+            const btnSettings = document.getElementById('pwa-install-btn-settings');
+            if (btnMobile) btnMobile.classList.remove('hidden');
+            if (btnSettings) btnSettings.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
+            const btnMobile = document.getElementById('pwa-install-btn-mobile');
+            const btnSettings = document.getElementById('pwa-install-btn-settings');
+            const installedNote = document.getElementById('pwa-installed-note');
+            if (btnMobile) btnMobile.classList.add('hidden');
+            if (btnSettings) btnSettings.classList.add('hidden');
+            if (installedNote) installedNote.classList.remove('hidden');
+            showToast('Aplikasi HPP UMKM berhasil terpasang di perangkat Anda! 🎉', 'success');
+        });
+
+        function triggerPwaInstall() {
+            if (!deferredPrompt) {
+                const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+                if (isIos) {
+                    showToast('Untuk install di iPhone: Ketuk tombol Share lalu pilih "Tambah ke Layar Utama" (Add to Home Screen).', 'info');
+                } else {
+                    showToast('Aplikasi dapat dipasang via menu browser: "Install App" / "Tambahkan ke Layar Utama".', 'info');
+                }
+                return;
+            }
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the PWA install prompt');
+                }
+                deferredPrompt = null;
+            });
+        }
+
+        // Check if already in standalone display mode
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            window.addEventListener('DOMContentLoaded', () => {
+                const installedNote = document.getElementById('pwa-installed-note');
+                const btnSettings = document.getElementById('pwa-install-btn-settings');
+                const btnMobile = document.getElementById('pwa-install-btn-mobile');
+                if (installedNote) installedNote.classList.remove('hidden');
+                if (btnSettings) btnSettings.classList.add('hidden');
+                if (btnMobile) btnMobile.classList.add('hidden');
+            });
         }
     </script>
 </body>
