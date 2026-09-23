@@ -75,6 +75,27 @@
         .badge-safe { background-color: #ECFDF5; color: #059669; }
         .badge-warning { background-color: #FFFBEB; color: #D97706; }
         .badge-danger { background-color: #FEF2F2; color: #DC2626; }
+
+        /* AI Chatbot */
+        .chat-fab { position: fixed; bottom: 5.5rem; right: 1.25rem; z-index: 45; width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #D97706, #F59E0B); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(217,119,6,0.4); transition: all 0.25s; }
+        .chat-fab:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(217,119,6,0.5); }
+        .chat-fab.open { border-radius: 12px; }
+        @media (min-width: 768px) { .chat-fab { bottom: 1.5rem; right: 1.5rem; } }
+
+        .chat-panel { position: fixed; bottom: 8.5rem; right: 1.25rem; width: calc(100vw - 2.5rem); max-width: 380px; height: 420px; max-height: 60vh; z-index: 44; background: white; border-radius: 1rem; border: 1px solid #E2E8F0; box-shadow: 0 12px 40px rgba(0,0,0,0.12); display: none; flex-direction: column; overflow: hidden; animation: chatSlideUp 0.25s ease-out; }
+        .chat-panel.open { display: flex; }
+        @media (min-width: 768px) { .chat-panel { bottom: 5.5rem; right: 1.5rem; } }
+        @keyframes chatSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        .chat-msg { max-width: 85%; padding: 0.5rem 0.75rem; border-radius: 0.75rem; font-size: 0.8125rem; line-height: 1.45; word-break: break-word; }
+        .chat-msg.user { background: #D97706; color: white; border-bottom-right-radius: 4px; margin-left: auto; }
+        .chat-msg.ai { background: #F1F5F9; color: #0F172A; border-bottom-left-radius: 4px; }
+
+        .typing-dots { display: inline-flex; gap: 4px; padding: 0.5rem 0.75rem; }
+        .typing-dots span { width: 6px; height: 6px; border-radius: 50%; background: #94A3B8; animation: bounce 1.2s infinite; }
+        .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
     </style>
 </head>
 <body class="md:flex h-screen overflow-hidden text-sm md:text-base">
@@ -452,6 +473,40 @@
             </button>
         </div>
     </nav>
+
+    <!-- AI Chatbot FAB -->
+    <button class="chat-fab" id="chat-fab" onclick="toggleChat()" title="Tanya AI">
+        <i data-lucide="bot" class="w-6 h-6" id="chat-fab-icon"></i>
+    </button>
+
+    <!-- AI Chat Panel -->
+    <div class="chat-panel" id="chat-panel">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-amber-50 to-white">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center">
+                    <i data-lucide="bot" class="w-4 h-4 text-white"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-slate-900">Asisten HPP</h4>
+                    <p class="text-[10px] text-slate-500" id="chat-model-label">Gemini Flash</p>
+                </div>
+            </div>
+            <button onclick="clearChat()" class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Hapus Chat">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-3 space-y-2" id="chat-messages">
+            <div class="chat-msg ai">Halo! 👋 Saya asisten HPP UMKM. Tanya apa aja soal hitung HPP, margin, atau harga jual.</div>
+        </div>
+
+        <form onsubmit="event.preventDefault(); sendChat();" class="p-2 border-t border-slate-200 flex gap-2">
+            <input type="text" id="chat-input" placeholder="Ketik pertanyaan..." class="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 bg-slate-50" autocomplete="off">
+            <button type="submit" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition flex-shrink-0" id="chat-send-btn">
+                <i data-lucide="send" class="w-4 h-4"></i>
+            </button>
+        </form>
+    </div>
 
     <!-- Toasts Container -->
     <div id="toast-container" class="toast-container"></div>
@@ -1554,6 +1609,119 @@
                 saveData();
                 showToast('Semua data berhasil dihapus', 'success');
             });
+        }
+
+        // --- AI CHATBOT ---
+        const CHAT_API = '/api/chat';
+        let chatHistory = [];
+        let chatOpen = false;
+
+        function toggleChat() {
+            chatOpen = !chatOpen;
+            const panel = document.getElementById('chat-panel');
+            const fab = document.getElementById('chat-fab');
+            panel.classList.toggle('open', chatOpen);
+            fab.innerHTML = chatOpen
+                ? '<i data-lucide="x" class="w-5 h-5"></i>'
+                : '<i data-lucide="bot" class="w-6 h-6"></i>';
+            lucide.createIcons();
+            if (chatOpen) document.getElementById('chat-input').focus();
+        }
+
+        function getChatContext() {
+            const menus = appData.recipes.filter(r => !r.isSubRecipe);
+            if (menus.length === 0) return '';
+            const top3 = menus.slice(0, 3).map(r =>
+                `- ${r.name}: HPP ${formatRp(r.totalHppPerPortion)}, Jual ${formatRp(r.currentSellingPrice)}, Margin ${r.realMarginPct.toFixed(1)}%`
+            ).join('\n');
+            const avg = menus.length > 0
+                ? (menus.reduce((s, r) => s + r.realMarginPct, 0) / menus.length).toFixed(1)
+                : 0;
+            return `Total menu: ${menus.length}, Rata-rata margin: ${avg}%\nContoh menu:\n${top3}`;
+        }
+
+        function appendChatMsg(text, role) {
+            const el = document.createElement('div');
+            el.className = `chat-msg ${role}`;
+            el.textContent = text;
+            document.getElementById('chat-messages').appendChild(el);
+            scrollChatBottom();
+        }
+
+        function scrollChatBottom() {
+            const c = document.getElementById('chat-messages');
+            c.scrollTop = c.scrollHeight;
+        }
+
+        function showTyping() {
+            const el = document.createElement('div');
+            el.className = 'typing-dots';
+            el.id = 'typing-indicator';
+            el.innerHTML = '<span></span><span></span><span></span>';
+            document.getElementById('chat-messages').appendChild(el);
+            scrollChatBottom();
+        }
+
+        function hideTyping() {
+            const el = document.getElementById('typing-indicator');
+            if (el) el.remove();
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            appendChatMsg(text, 'user');
+            chatHistory.push({ role: 'user', text });
+
+            const btn = document.getElementById('chat-send-btn');
+            btn.disabled = true;
+            input.disabled = true;
+            showTyping();
+
+            try {
+                const resp = await fetch(CHAT_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: chatHistory.slice(-8),
+                        context: getChatContext()
+                    })
+                });
+
+                hideTyping();
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    appendChatMsg(err.error || 'Gagal menghubungi AI. Coba lagi.', 'ai');
+                    return;
+                }
+
+                const data = await resp.json();
+                appendChatMsg(data.reply, 'ai');
+                chatHistory.push({ role: 'model', text: data.reply });
+
+                if (data.model) {
+                    const label = data.model.includes('lite') ? 'Gemini Flash-Lite' : 'Gemini Flash';
+                    document.getElementById('chat-model-label').textContent = label;
+                }
+            } catch (e) {
+                hideTyping();
+                appendChatMsg('Koneksi gagal. Pastikan sudah deploy ke Vercel.', 'ai');
+            } finally {
+                btn.disabled = false;
+                input.disabled = false;
+                input.focus();
+            }
+        }
+
+        function clearChat() {
+            chatHistory = [];
+            const msgs = document.getElementById('chat-messages');
+            msgs.innerHTML = '<div class="chat-msg ai">Chat direset. Tanya apa aja soal HPP, margin, atau harga jual ya! 👋</div>';
+            document.getElementById('chat-model-label').textContent = 'Gemini Flash';
         }
     </script>
 </body>
