@@ -508,7 +508,7 @@
                     <i data-lucide="bot" class="w-4 h-4 text-white"></i>
                 </div>
                 <div>
-                    <h4 class="text-sm font-bold text-slate-900">Asisten HPP</h4>
+                    <h4 class="text-sm font-bold text-slate-900">qodirs Asisten</h4>
                     <p class="text-[10px] text-amber-600 font-semibold" id="chat-model-label">Gemini 3.6 Flash</p>
                 </div>
             </div>
@@ -518,7 +518,7 @@
         </div>
 
         <div class="flex-1 overflow-y-auto p-3 space-y-2" id="chat-messages">
-            <div class="chat-msg ai">Halo! 👋 Saya asisten HPP UMKM. Tanya apa aja soal hitung HPP, margin, atau harga jual. Jawaban saya singkat & to-the-point!</div>
+            <div class="chat-msg ai">Halo! 👋 Saya <strong>qodirs Asisten</strong>. Siap bantu kamu seputar hitung HPP, susun resep, atau tentukan harga jual yang pas & menguntungkan. Ada yang mau ditanyakan?</div>
         </div>
 
         <!-- Quick Prompts Chips -->
@@ -529,7 +529,7 @@
         </div>
 
         <form onsubmit="event.preventDefault(); sendChat();" class="p-2 border-t border-slate-200 flex gap-2">
-            <input type="text" id="chat-input" placeholder="Ketik pertanyaan singkat..." class="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 bg-slate-50" autocomplete="off">
+            <input type="text" id="chat-input" placeholder="Tanya qodirs Asisten..." class="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 bg-slate-50" autocomplete="off">
             <button type="submit" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition flex-shrink-0" id="chat-send-btn">
                 <i data-lucide="send" class="w-4 h-4"></i>
             </button>
@@ -1724,18 +1724,14 @@
         }
 
         async function callDirectGemini(messages, context, apiKey) {
-            const systemPrompt = `Kamu adalah asisten AI untuk aplikasi HPP UMKM (Harga Pokok Penjualan F&B).
-Tugasmu membantu pengguna soal:
-- Cara menghitung HPP makanan/minuman
-- Tips margin & harga jual
-- Strategi bisnis F&B sederhana
-- Cara pakai fitur aplikasi
+            const systemPrompt = `Kamu adalah "qodirs Asisten", asisten AI yang ramah, pintar, dan solutif untuk aplikasi web HPP UMKM (kalkulator HPP dan strategi harga F&B).
 
-ATURAN KETAT:
-- Jawab SINGKAT, maks 2-3 kalimat. Langsung to the point.
-- Pakai bahasa Indonesia kasual.
-- Kalau ada harga, pakai format Rp (contoh: Rp 25.000).
-- Hemat token.${context ? "\n\nKonteks data menu pengguna:\n" + context : ""}`;
+GAYA DAN TONE JAWABAN:
+- Gunakan bahasa Indonesia yang santai, luwes, bersahabat, dan natural (seperti partner diskusi bisnis kuliner).
+- Jawab secara tuntas, informatif, dan to-the-point tanpa berbelit-belit, tapi JANGAN terlalu pendek sampai terpotong.
+- Jika ditanya cara menggunakan aplikasi, berikan panduan langkah praktis yang jelas.
+- Jika menyebutkan nominal harga atau biaya, selalu gunakan format Rupiah rapi (contoh: Rp 15.000).
+- Jangan pernah menampilkan teks meta dalam tanda kurung seperti "(Casual Indonesian)".${context ? "\n\nKonteks data menu pengguna:\n" + context : ""}`;
 
             const contents = messages.map(m => ({
                 role: m.role === 'user' ? 'user' : 'model',
@@ -1753,7 +1749,7 @@ ATURAN KETAT:
                         body: JSON.stringify({
                             system_instruction: { parts: [{ text: systemPrompt }] },
                             contents,
-                            generationConfig: { maxOutputTokens: 150, temperature: 0.7 }
+                            generationConfig: { maxOutputTokens: 800, temperature: 0.7 }
                         })
                     });
                     if (!resp.ok) continue;
@@ -1837,7 +1833,7 @@ ATURAN KETAT:
         function clearChat() {
             chatHistory = [];
             const msgs = document.getElementById('chat-messages');
-            msgs.innerHTML = '<div class="chat-msg ai">Chat direset. Tanya apa aja soal HPP, margin, atau harga jual ya! 👋</div>';
+            msgs.innerHTML = '<div class="chat-msg ai">Chat direset. Saya <strong>qodirs Asisten</strong> siap bantu kamu lagi! 👋</div>';
             document.getElementById('chat-model-label').textContent = 'Gemini 3.6 Flash';
         }
     </script>
