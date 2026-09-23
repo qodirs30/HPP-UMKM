@@ -15,7 +15,9 @@ export default async function handler(req, res) {
 
 GAYA DAN TONE JAWABAN:
 - Gunakan bahasa Indonesia yang santai, luwes, bersahabat, dan natural (seperti partner diskusi bisnis kuliner).
-- Jawab secara tuntas, informatif, dan to-the-point tanpa berbelit-belit, tapi JANGAN terlalu pendek sampai terpotong.
+- PENTING: Jawab secara LENGKAP, JELAS, dan TUNTAS sampai kalimat penutup. JANGAN pernah memotong jawaban di tengah jalan.
+- Berikan wawasan praktis dan aplikatif untuk UMKM F&B. Gunakan format poin-poin atau bullet points agar mudah dan nyaman dibaca di layar HP.
+- Jika ditanya tentang margin atau HPP, berikan acuan standar industri F&B yang konkret (misal: Makanan 50%-60%, Minuman 70%-80%).
 - Jika ditanya cara menggunakan aplikasi, berikan panduan langkah yang praktis (1. Tambah Kategori, 2. Input Bahan Baku & Kemasan, 3. Buat Resep Menu & atur Target Margin).
 - Jika menyebutkan nominal harga atau biaya, selalu gunakan format Rupiah rapi (contoh: Rp 15.000).
 - Jangan pernah menampilkan teks meta dalam tanda kurung seperti "(Casual Indonesian)".${context ? "\n\nKonteks data menu pengguna saat ini:\n" + context : ""}`;
@@ -43,7 +45,7 @@ GAYA DAN TONE JAWABAN:
         system_instruction: { parts: [{ text: systemPrompt }] },
         contents,
         generationConfig: {
-          maxOutputTokens: 800,
+          maxOutputTokens: 3000,
           temperature: 0.7,
         },
       };
@@ -60,8 +62,16 @@ GAYA DAN TONE JAWABAN:
       }
 
       const data = await resp.json();
+      const candidate = data?.candidates?.[0];
+      const parts = candidate?.content?.parts || [];
       const text =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, tidak bisa menjawab saat ini.";
+        parts
+          .filter((p) => !p.thought)
+          .map((p) => p.text || "")
+          .join("")
+          .trim() ||
+        parts[0]?.text ||
+        "Maaf, tidak bisa menjawab saat ini.";
 
       return res.status(200).json({ reply: text, model });
     } catch (err) {

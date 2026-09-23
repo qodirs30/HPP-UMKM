@@ -1904,11 +1904,17 @@
         }
 
         function formatChatText(text) {
+            if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             let safe = div.innerHTML;
-            safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            safe = safe.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            // Bold: **text**
+            safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // Bullet points at start of line
+            safe = safe.replace(/^[\*\-]\s+(.+)$/gm, '• $1');
+            // Italic: *text* (word boundaries to prevent bullet collisions)
+            safe = safe.replace(/(^|[^\*])\*([^\*\n]+)\*([^\*]|$)/g, '$1<em>$2</em>$3');
+            // Line breaks
             safe = safe.replace(/\n/g, '<br>');
             return safe;
         }
@@ -1959,7 +1965,9 @@
 
 GAYA DAN TONE JAWABAN:
 - Gunakan bahasa Indonesia yang santai, luwes, bersahabat, dan natural (seperti partner diskusi bisnis kuliner).
-- Jawab secara tuntas, informatif, dan to-the-point tanpa berbelit-belit, tapi JANGAN terlalu pendek sampai terpotong.
+- PENTING: Jawab secara LENGKAP, JELAS, dan TUNTAS sampai kalimat penutup. JANGAN pernah memotong jawaban di tengah jalan.
+- Berikan wawasan praktis dan aplikatif untuk UMKM F&B. Gunakan format poin-poin agar mudah dan nyaman dibaca di layar HP.
+- Jika ditanya tentang margin atau HPP, berikan acuan standar industri F&B yang konkret (misal: Makanan 50%-60%, Minuman 70%-80%).
 - Jika ditanya cara menggunakan aplikasi, berikan panduan langkah praktis yang jelas.
 - Jika menyebutkan nominal harga atau biaya, selalu gunakan format Rupiah rapi (contoh: Rp 15.000).
 - Jangan pernah menampilkan teks meta dalam tanda kurung seperti "(Casual Indonesian)".${context ? "\n\nKonteks data menu pengguna:\n" + context : ""}`;
@@ -1980,12 +1988,18 @@ GAYA DAN TONE JAWABAN:
                         body: JSON.stringify({
                             system_instruction: { parts: [{ text: systemPrompt }] },
                             contents,
-                            generationConfig: { maxOutputTokens: 800, temperature: 0.7 }
+                            generationConfig: { maxOutputTokens: 3000, temperature: 0.7 }
                         })
                     });
                     if (!resp.ok) continue;
                     const data = await resp.json();
-                    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    const candidate = data?.candidates?.[0];
+                    const parts = candidate?.content?.parts || [];
+                    const text = parts
+                        .filter(p => !p.thought)
+                        .map(p => p.text || '')
+                        .join('')
+                        .trim() || parts[0]?.text;
                     if (text) return { reply: text, model };
                 } catch (e) {
                     continue;
